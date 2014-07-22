@@ -7,10 +7,17 @@
             [clojure.test.check.properties :as prop]))
 
 (defparser SimpleIntegerParser []
-           num (and [_ (zero+ whitespace)
-                     prefix (maybe (one-of #{\+ \-}))
-                     d (one+ digits)]
-                    (read-string (apply str prefix d))))
+           num (and (zero+ whitespace)
+                    (maybe (one-of #{\+ \-})) -> prefix
+                    (one+ digits) -> d
+                    <- (read-string (apply str prefix d))))
+
+
+
+(clojure.pprint/pprint (macroexpand '(and (zero+ whitespace)
+                                          (maybe (one-of #{\+ \-})) -> prefix
+                                          (one+ digits) -> d
+                                          <- (read-string (apply str prefix d)))))
 
 (deftest number-parser-tests
   (tc/quick-check 1000
@@ -18,12 +25,13 @@
                   (is (= ((:num SimpleIntegerParser) (string-cursor (str n))) n)))))
 
 
+
 (defparser SimpleIntegerVectorParser [SimpleIntegerParser]
-           vector (and [_ (eat whitespace)
-                        _ \[
-                        itms (zero+ (or num vector))
-                        _ \]]
-                       (vec itms)))
+           vector (and (eat whitespace)
+                       \[
+                       (zero+ (or num vector)) -> itms
+                       \]
+                       <- (vec itms)))
 
 (deftest vector-of-ints-test
   (tc/quick-check 100
@@ -32,3 +40,6 @@
                                                       (gen/one-of [gen/int (gen/vector gen/int)]))]))]
                     (prop/for-all [itms vgen]
                                   (is (= ((:vector SimpleIntegerVectorParser) (string-cursor (str itms))) itms))))))
+
+
+

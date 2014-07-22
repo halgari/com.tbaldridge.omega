@@ -83,22 +83,40 @@
        (if (identical? ~sym fail)
          fail
          ~(add-clauses cursor-sym body more)))
-    (list* 'do body)))
+    body))
 
-(defmacro and [pairs & body]
-  (let [pairs (map (fn [x]
-                     (if (= x '_)
-                       (gensym "_")
-                       x))
-                   pairs)
-        parted (partition 2 pairs)
+(defn -parse-args
+  [args]
+  (loop [[arg & rest] args
+         rules []
+         return nil]
+    (assert (not (= '-> arg)) "invalid position for ->")
+    (if arg
+      (if (= '<- arg)
+        (let [return (first rest)]
+          (recur (next rest)
+                 rules
+                 return))
+        (if (= (first rest) '->)
+          (let [binding (-> rest next first)
+                rest (-> rest next next)]
+            (recur rest
+                   (conj rules [binding arg])
+                   return))
+          (recur rest
+                 (conj rules [(gensym "_") arg])
+                 return)))
+      [rules return])))
+
+(defmacro and [& args]
+  (let [[parsed body] (-parse-args args)
         cursor-sym (gensym "cursor")]
     `(let [~@(mapcat
                (fn [[sym parser]]
                  [sym `(to-parser ~parser)])
-               parted)]
+               parsed)]
        (fn [~cursor-sym]
-         ~(add-clauses cursor-sym body parted)))))
+         ~(add-clauses cursor-sym body parsed)))))
 
 
 
