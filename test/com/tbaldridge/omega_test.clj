@@ -12,13 +12,6 @@
                     (one+ digits) -> d
                     <- (read-string (apply str prefix d))))
 
-
-
-(clojure.pprint/pprint (macroexpand '(and (zero+ whitespace)
-                                          (maybe (one-of #{\+ \-})) -> prefix
-                                          (one+ digits) -> d
-                                          <- (read-string (apply str prefix d)))))
-
 (deftest number-parser-tests
   (tc/quick-check 1000
     (prop/for-all [n gen/int]
