@@ -161,6 +161,15 @@
           acc
           (recur (conj acc v)))))))
 
+
+(defn eat [g]
+  (fn [cursor]
+    (loop []
+      (let [v (g cursor)]
+        (if (identical? v fail)
+          nil
+          (recur))))))
+
 (defn maybe
   ([g]
    (maybe g nil))

@@ -15,4 +15,20 @@
 (deftest number-parser-tests
   (tc/quick-check 1000
     (prop/for-all [n gen/int]
-      (is (= ((:num SimpleIntegerParser) (string-cursor (str n))) n)))))
+                  (is (= ((:num SimpleIntegerParser) (string-cursor (str n))) n)))))
+
+
+(defparser SimpleIntegerVectorParser [SimpleIntegerParser]
+           vector (and [_ (eat whitespace)
+                        _ \[
+                        itms (zero+ (or num vector))
+                        _ \]]
+                       (vec itms)))
+
+(deftest vector-of-ints-test
+  (tc/quick-check 100
+                  (let [vgen (gen/vector
+                               (gen/one-of [gen/int (gen/vector
+                                                      (gen/one-of [gen/int (gen/vector gen/int)]))]))]
+                    (prop/for-all [itms vgen]
+                                  (is (= ((:vector SimpleIntegerVectorParser) (string-cursor (str itms))) itms))))))
